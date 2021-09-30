@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: lambda used to ...
+
+
+Parameters:
+  functionName:
+    Type: String
+    Description: functionName
+  skillId:
+    Type: String
+    Description: skillId
+    Default: amzn1.ask.skill.6e13a3e1-748b-4f84-86cc-8850302bcee7
+
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: lambdapolicy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - cloudwatch:*
+            - logs:*
+            Resource: '*'
+
+  Lambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Description:  Cloudwatch consume lambda 
+      Runtime: python3.7
+      Timeout: 60
+      Role: !GetAtt LambdaRole.Arn
+      FunctionName: !Ref functionName
+      Handler: lambda-handler.onEventHandler
+      CodeUri: !Sub ./lambdas/${functionName}/
+      Events:
+        AlexaSkillEvent:
+          Type: AlexaSkill
+
+
+
+  TriggerName:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref Lambda
+      Principal: 'alexa-appkit.amazon.com'
+
+
